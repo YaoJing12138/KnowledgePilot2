@@ -5,7 +5,7 @@ class NoteManager:
         """初始化 NoteManager 类"""
         self.filepath = filepath
         self.notes = self._loaded()
-        self.next_id = max([note['id'] for note in self.notes], default=0) + 1 if self.notes else 1
+        self.next_id = max([note['id'] for note in self.notes], default=0) + 1 
 
     def _loaded(self):
         try:
@@ -31,42 +31,24 @@ class NoteManager:
         self.notes.append(note)
         self._save()
         self.next_id += 1
-        print(f"笔记 '{title}' 已添加。")
+        return note
 
     def list_all(self):
-        """列出所有笔记"""
-        if self.notes:
-            print("所有笔记:")
-            self.print_notes()
-        else:
-            print("没有笔记可显示。")
+        """返回所有笔记"""
+        return self.notes
 
     def search(self , keyword):
-        """搜索笔记"""
-        found_notes = [note for note in self.notes if keyword.lower() in note['title'].lower() or keyword.lower() in note['content'].lower()]
-        if found_notes:
-            print("搜索结果:")
-            self.print_notes(found_notes)
-        else:
-            print("没有找到匹配的笔记。")
+        """返回匹配的笔记"""
+        kw = keyword.lower()
+        return [note for note in self.notes if kw in note['title'].lower() or kw in note['content'].lower()]
 
     def delete(self , note_id):
         """删除一条笔记"""
         if not any(note['id'] == note_id for note in self.notes):
-            print(f"未找到 ID 为 {note_id} 的笔记。")
             return False
-
         self.notes = [note for note in self.notes if note['id'] != note_id]
         self._save()
-        print(f"笔记 ID {note_id} 已删除。")
         return True
-
-    def print_notes(self , notes = None):
-        """打印笔记列表"""
-        if notes is None:
-            notes = self.notes
-        for note in notes:
-            print(f"ID: {note['id']}, 标题: {note['title']}, 内容: {note['content']}")
 
 if __name__ == "__main__":
     manager = NoteManager()
@@ -84,22 +66,22 @@ if __name__ == "__main__":
             elif user_input.lower() == 'add':
                 title = input("请输入笔记标题: ")
                 content = input("请输入笔记内容: ")
-                manager.add(title, content)
+                print(manager.add(title, content))
 
             elif user_input.lower() == 'list':
-                manager.list_all()
+                print(manager.list_all())
 
             elif user_input.lower() == 'search':
                 keyword = input("请输入搜索关键词: ").strip()
                 if not keyword:
                     print("搜索关键词不能为空。")
                 else:
-                    manager.search(keyword)
+                    print(manager.search(keyword))
 
             elif user_input.lower() == 'delete':
                 try:
                     note_id = int(input("请输入要删除的笔记 ID: "))
-                    manager.delete(note_id)
+                    print(manager.delete(note_id))
                 except ValueError:
                     print("请输入有效的数字 ID。")
 

@@ -1,0 +1,13 @@
+# 虚拟环境（本机生成，不进仓库）
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# pytest 缓存
+.pytest_cache/
+
+# 运行时数据（按需保留：想留档测试笔记就删掉这一行）
+notes.json
