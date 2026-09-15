@@ -1,54 +1,61 @@
-import json
+import sqlite3
 
 class NoteManager:
-    def __init__(self , filepath = "notes.json"):
+    def __init__(self , db_path = "notes.db"):
         """初始化 NoteManager 类"""
-        self.filepath = filepath
-        self.notes = self._loaded()
-        self.next_id = max([note['id'] for note in self.notes], default=0) + 1 
+        self.db_path = db_path
+        # check_same_thread=False 允许在不同线程中使用同一个连接对象
+        self.conn = sqlite3.connect(self.db_path , check_same_thread=False)
+        #让查询结果以列名返回
+        self.conn.row_factory = sqlite3.Row
+        self._create_table()
 
-    def _loaded(self):
-        try:
-            with open(self.filepath , "r" , encoding="utf-8") as f:
-                notes = json.load(f)
-                return notes
-        except FileNotFoundError: #空笔记
-            return []
-        except json.JSONDecodeError:#JSON解码错误
-            return []
-
-    def _save(self):
-        with open(self.filepath , "w" , encoding="utf-8") as f:
-            json.dump(self.notes , f , ensure_ascii=False , indent=4)
+    def _create_table(self):
+        """初始化数据库表"""
+        with self.conn:
+            self.conn.execute("""
+                CREATE TABLE IF NOT EXISTS notes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL
+                )
+            """)
+    @staticmethod
+    def _row_to_dict(row):
+        """将数据库行转换为字典"""
+        return {
+            "id": row["id"],
+            "title": row["title"],
+            "content": row["content"]
+        }
 
     def add(self , title , content):
         """添加一条笔记"""
-        note = {
-            "id": self.next_id,
-            "title": title,
-            "content": content
-        }
-        self.notes.append(note)
-        self._save()
-        self.next_id += 1
-        return note
+        with self.conn:
+            cur = self.conn.execute(
+                "INSERT INTO notes (title , content) VALUES (? , ?)" , 
+                (title , content)
+            )
+            note_id = cur.lastrowid
+            return {"id": note_id , "title": title , "content": content}
 
     def list_all(self):
         """返回所有笔记"""
-        return self.notes
+        with self.conn:
+            cur = self.conn.execute("SELECT id , title , content FROM notes")
+            return [self._row_to_dict(row) for row in cur.fetchall()]
 
     def search(self , keyword):
         """返回匹配的笔记"""
-        kw = keyword.lower()
-        return [note for note in self.notes if kw in note['title'].lower() or kw in note['content'].lower()]
+        with self.conn:
+            cur = self.conn.execute("SELECT id , title , content FROM notes WHERE title LIKE ? OR content LIKE ?", (f'%{keyword}%', f'%{keyword}%'))
+            return [self._row_to_dict(row) for row in cur.fetchall()]
 
     def delete(self , note_id):
         """删除一条笔记"""
-        if not any(note['id'] == note_id for note in self.notes):
-            return False
-        self.notes = [note for note in self.notes if note['id'] != note_id]
-        self._save()
-        return True
+        with self.conn:
+            cur = self.conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+            return cur.rowcount > 0
 
 if __name__ == "__main__":
     manager = NoteManager()
