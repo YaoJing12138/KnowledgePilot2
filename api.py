@@ -3,14 +3,16 @@ from pydantic import BaseModel
 from DayOne import NoteManager
 from fastapi.responses import RedirectResponse
 import sqlite3
+import os
 
 app = FastAPI()
 
 def connect_db():
     """连接到 SQLite 数据库"""
+    os.makedirs("data" , exist_ok=True)
+    conn = sqlite3.connect("data/notes.db")
+    conn.row_factory = sqlite3.Row
     try:
-        conn = sqlite3.connect("notes.db" )
-        conn.row_factory = sqlite3.Row
         yield conn
     finally:
         conn.close()

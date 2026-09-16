@@ -14,3 +14,6 @@ notes.json
 
 # 数据库文件（按需保留：想留档测试笔记就删掉这一行）
 notes.db
+
+#date
+data/

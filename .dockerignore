@@ -1,0 +1,19 @@
+# 这些东西不要打进镜像（作用跟 .gitignore 一样）
+
+# 虚拟环境：容器里会自己装依赖，不需要本机这份
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 测试缓存
+.pytest_cache/
+
+# Git 历史
+.git/
+.gitignore
+
+# 数据库文件：属于运行时数据，不该固化进镜像
+*.db
