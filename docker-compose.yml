@@ -1,0 +1,19 @@
+# docker-compose.yml
+# 把 docker run 的那串参数固化成一个文件，以后一条命令就能起服务。
+# 用法：docker compose up -d     启动
+#      docker compose down     停止并删除容器（具名卷默认保留）
+#      docker compose logs -f  看日志
+
+services:
+  api:
+    build: .                    # 用当前目录的 Dockerfile 构建镜像
+    container_name: kp          # 容器名（相当于 --name kp）
+    ports:
+      - "8000:8000"             # 端口映射（相当于 -p 8000:8000）
+    volumes:
+      - kp-data:/app/data       # 数据卷（相当于 -v kp-data:/app/data）
+    restart: unless-stopped     # 容器意外退出时自动重启（run 时没写，但生产常用）
+
+volumes:
+  kp-data:
+    name: kp-data               # 固定卷名，复用你之前手工创建的那个卷

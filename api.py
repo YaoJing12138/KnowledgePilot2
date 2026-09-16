@@ -1,17 +1,24 @@
 from fastapi import FastAPI , HTTPException , Depends
 from pydantic import BaseModel
-from DayOne import NoteManager
+from DayOne import NoteManager , get_connection , init_db
 from fastapi.responses import RedirectResponse
+from contextlib import asynccontextmanager
 import sqlite3
-import os
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app):
+    """应用程序生命周期管理器"""
+    conn = get_connection()
+    try:
+        init_db(conn)
+    finally:
+        conn.close()
+    yield
+app = FastAPI(lifespan=lifespan)
 
 def connect_db():
     """连接到 SQLite 数据库"""
-    os.makedirs("data" , exist_ok=True)
-    conn = sqlite3.connect("data/notes.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     try:
         yield conn
     finally:
@@ -44,6 +51,14 @@ def list_notes(note_manager: NoteManager = Depends(get_note_manager)):
 def search_notes(keyword: str, note_manager: NoteManager = Depends(get_note_manager)):
     """搜索笔记"""
     return note_manager.search(keyword)
+
+@app.get("/notes/{note_id}")
+def get_note(note_id: int, note_manager: NoteManager = Depends(get_note_manager)):
+    """获取一条笔记"""
+    note = note_manager.get(note_id)
+    if note is None:
+        raise HTTPException(status_code=404 , detail=f"未找到 ID 为 {note_id} 的笔记。")
+    return note
 
 @app.delete("/notes/{note_id}")
 def delete_note(note_id: int, note_manager: NoteManager = Depends(get_note_manager)):

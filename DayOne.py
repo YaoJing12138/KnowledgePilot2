@@ -1,22 +1,30 @@
 import sqlite3
+import os
+
+def get_connection():
+    """连接到 SQLite 数据库"""
+    os.makedirs("data" , exist_ok=True)
+    conn = sqlite3.connect("data/notes.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db(conn):
+    """初始化数据库"""
+    with conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL
+            )
+        """)
 
 class NoteManager:
     def __init__(self , conn):
         """初始化 NoteManager 类"""
         self.conn = conn
         #让查询结果以列名返回
-        self._create_table()
 
-    def _create_table(self):
-        """初始化数据库表"""
-        with self.conn:
-            self.conn.execute("""
-                CREATE TABLE IF NOT EXISTS notes (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    content TEXT NOT NULL
-                )
-            """)
     @staticmethod
     def _row_to_dict(row):
         """将数据库行转换为字典"""
@@ -54,9 +62,16 @@ class NoteManager:
             cur = self.conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
             return cur.rowcount > 0
 
+    def get(self , note_id):
+        """获取一条笔记"""
+        cur = self.conn.execute("SELECT id , title , content FROM notes WHERE id = ?", (note_id,))
+        row = cur.fetchone()
+        return self._row_to_dict(row) if row else None
+
+
 if __name__ == "__main__":
-    conn = sqlite3.connect("notes.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
+    init_db(conn)
     manager = NoteManager(conn)
     while True:
         try:
