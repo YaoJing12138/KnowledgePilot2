@@ -1,13 +1,10 @@
 import sqlite3
 
 class NoteManager:
-    def __init__(self , db_path = "notes.db"):
+    def __init__(self , conn):
         """初始化 NoteManager 类"""
-        self.db_path = db_path
-        # check_same_thread=False 允许在不同线程中使用同一个连接对象
-        self.conn = sqlite3.connect(self.db_path , check_same_thread=False)
+        self.conn = conn
         #让查询结果以列名返回
-        self.conn.row_factory = sqlite3.Row
         self._create_table()
 
     def _create_table(self):
@@ -58,7 +55,9 @@ class NoteManager:
             return cur.rowcount > 0
 
 if __name__ == "__main__":
-    manager = NoteManager()
+    conn = sqlite3.connect("notes.db")
+    conn.row_factory = sqlite3.Row
+    manager = NoteManager(conn)
     while True:
         try:
             print("=============================================")
